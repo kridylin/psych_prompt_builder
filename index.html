@@ -1,404 +1,671 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>心理内容去AI味提示词生成器</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>心动之约 - 真心话大冒险</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-truth: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            --card-dare: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            --text-main: #ffffff;
+            --text-sub: rgba(255, 255, 255, 0.6);
+        }
 
-    :root {
-      --bg: #f7f6f3;
-      --surface: #ffffff;
-      --surface-2: #f1f0ec;
-      --border: rgba(0,0,0,0.10);
-      --border-md: rgba(0,0,0,0.18);
-      --text: #1a1917;
-      --text-2: #6b6a66;
-      --text-3: #9e9d99;
-      --accent-bg: #EEEDFE;
-      --accent-border: #AFA9EC;
-      --accent-text: #3C3489;
-      --radius-md: 8px;
-      --radius-lg: 12px;
-      --radius-xl: 20px;
-      --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #1a1917;
-        --surface: #232220;
-        --surface-2: #2c2b28;
-        --border: rgba(255,255,255,0.10);
-        --border-md: rgba(255,255,255,0.18);
-        --text: #f0ede8;
-        --text-2: #9e9d99;
-        --text-3: #6b6a66;
-        --accent-bg: #26215C;
-        --accent-border: #534AB7;
-        --accent-text: #CECBF6;
-      }
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 16px;
+            overflow: hidden;
+        }
 
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 2rem 1rem 4rem;
-    }
+        /* 顶部状态栏 */
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 8px;
+            font-size: 14px;
+            color: var(--text-sub);
+        }
 
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
-    }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-    .header {
-      margin-bottom: 2rem;
-    }
-    .header h1 {
-      font-size: 22px;
-      font-weight: 500;
-      margin-bottom: 6px;
-    }
-    .header p {
-      font-size: 14px;
-      color: var(--text-2);
-      line-height: 1.6;
-    }
+        .edit-icon {
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+        }
 
-    .card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1rem 1.25rem;
-      margin-bottom: 12px;
-    }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
 
-    .section-label {
-      font-size: 13px;
-      color: var(--text-2);
-      font-weight: 500;
-      margin-bottom: 10px;
-    }
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
 
-    .tag-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+        .reset-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
 
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
-      border-radius: var(--radius-xl);
-      font-size: 13px;
-      cursor: pointer;
-      border: 0.5px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text-2);
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-    .tag:hover {
-      border-color: var(--border-md);
-      color: var(--text);
-    }
-    .tag.active {
-      background: var(--accent-bg);
-      border-color: var(--accent-border);
-      color: var(--accent-text);
-      font-weight: 500;
-    }
-    .tag i { font-size: 14px; }
+        /* 核心卡片容器 */
+        .card-container {
+            width: 100%;
+            max-width: 360px;
+            height: 380px;
+            perspective: 1000px;
+            margin: 20px 0;
+        }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    @media (max-width: 520px) {
-      .row { grid-template-columns: 1fr; }
-    }
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
 
-    select, textarea {
-      width: 100%;
-      font-size: 14px;
-      color: var(--text);
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 8px 10px;
-      outline: none;
-      font-family: var(--font);
-      transition: border-color 0.15s;
-    }
-    select { height: 36px; cursor: pointer; }
-    select:focus, textarea:focus { border-color: var(--border-md); }
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-      line-height: 1.6;
-    }
-    textarea::placeholder { color: var(--text-3); }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
 
-    .tip {
-      font-size: 12px;
-      color: var(--text-3);
-      margin-top: 6px;
-      line-height: 1.5;
-    }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 32px;
+            text-align: center;
+        }
 
-    .divider {
-      border: none;
-      border-top: 0.5px solid var(--border);
-      margin: 16px 0;
-    }
+        .card-front {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
 
-    .gen-btn {
-      width: 100%;
-      padding: 11px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border-radius: var(--radius-md);
-      border: 0.5px solid var(--border-md);
-      background: var(--surface);
-      color: var(--text);
-      font-family: var(--font);
-      transition: all 0.15s;
-      margin-top: 4px;
-    }
-    .gen-btn:hover { background: var(--surface-2); }
-    .gen-btn:active { transform: scale(0.99); }
+        .card-front .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.8;
+        }
 
-    .result-box {
-      background: var(--surface-2);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem;
-      margin-top: 16px;
-      display: none;
-      position: relative;
-    }
+        .card-front .hint {
+            font-size: 16px;
+            color: var(--text-sub);
+            letter-spacing: 2px;
+        }
 
-    .result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .result-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-2);
-    }
+        .card-back {
+            transform: rotateY(180deg);
+            background: var(--card-truth);
+        }
 
-    .copy-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      border-radius: var(--radius-md);
-      border: 0.5px solid var(--border-md);
-      background: var(--surface);
-      color: var(--text-2);
-      font-family: var(--font);
-      transition: all 0.15s;
-    }
-    .copy-btn:hover { color: var(--text); }
+        .card-back.dare-mode {
+            background: var(--card-dare);
+        }
 
-    .result-text {
-      font-size: 13px;
-      line-height: 1.85;
-      color: var(--text);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
+        .zone-tag {
+            position: absolute;
+            top: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 14px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            backdrop-filter: blur(5px);
+        }
 
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      background: var(--accent-bg);
-      color: var(--accent-text);
-      border: 0.5px solid var(--accent-border);
-      margin-left: 8px;
-      vertical-align: middle;
-    }
+        .question-text {
+            font-size: 22px;
+            line-height: 1.6;
+            font-weight: 600;
+            word-break: break-all;
+        }
 
-    .footer {
-      margin-top: 2.5rem;
-      font-size: 12px;
-      color: var(--text-3);
-      text-align: center;
-      line-height: 1.7;
-    }
-  </style>
+        /* 底部控制区域 */
+        .controls {
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-truth {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+
+        .btn-dare {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+
+        .disabled {
+            background: #3a3a3c !important;
+            color: #8e8e93;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* 题库编辑弹窗弹窗（后台管理面板） */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            padding: 20px;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .tab {
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #2575fc;
+        }
+
+        .editor-container {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .edit-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .edit-zone {
+            width: 90px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .edit-text {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .del-btn {
+            background: #ff416c;
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+        }
+
+        .footer-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .save-btn { background: #2575fc; color: white; }
+        .cancel-btn { background: rgba(255,255,255,0.2); color: white; }
+        .add-btn { background: rgba(255,255,255,0.1); color: #2575fc; border: 1px dashed #2575fc; margin-top: 5px; width: 100%; padding: 8px; border-radius: 8px;}
+    </style>
 </head>
 <body>
-  <div class="container">
 
+    <!-- 顶部状态栏 -->
     <div class="header">
-      <h1>心理内容去AI味提示词生成器 <span class="badge">k心理</span></h1>
-      <p>选择你的内容场景，填入核心信息，生成一段可以直接扔给AI的提示词——让AI写出像人说的话，而不是像AI写的文案。</p>
+        <div class="header-left">
+            <span id="pool-count">真心话: 50 | 大冒险: 50</span>
+            <span class="edit-icon" onclick="openEditor()">⚙️</span>
+        </div>
+        <div class="btn-group">
+            <button class="reset-btn" onclick="resetPools()">洗牌(清空历史)</button>
+        </div>
     </div>
 
-    <!-- 平台 -->
-    <div class="card">
-      <p class="section-label">内容平台</p>
-      <div class="tag-group" id="platform-tags">
-        <span class="tag active" data-val="小红书"><i class="ti ti-brand-instagram"></i>小红书</span>
-        <span class="tag" data-val="微信公众号"><i class="ti ti-brand-wechat"></i>微信公众号</span>
-        <span class="tag" data-val="朋友圈"><i class="ti ti-circle-dot"></i>朋友圈</span>
-        <span class="tag" data-val="抖音视频脚本"><i class="ti ti-video"></i>抖音脚本</span>
-        <span class="tag" data-val="微信群推文/活动通知"><i class="ti ti-message-circle"></i>微信群推文</span>
-      </div>
+    <!-- 卡片舞台 -->
+    <div class="card-container">
+        <div class="card" id="card">
+            <!-- 牌面未抽取 -->
+            <div class="card-face card-front">
+                <div class="logo">✨</div>
+                <div class="hint" id="front-hint">请选择下方模式抽取</div>
+            </div>
+            <!-- 牌面展示题目 -->
+            <div class="card-face card-back" id="card-back">
+                <div class="zone-tag" id="zone-tag">关系升温区</div>
+                <div class="question-text" id="question-text">如果你可以改变过去的一件事，那会是什么？</div>
+            </div>
+        </div>
     </div>
 
-    <!-- 内容类型 -->
-    <div class="card">
-      <p class="section-label">内容类型</p>
-      <div class="tag-group" id="type-tags">
-        <span class="tag active" data-val="活动推广文案"><i class="ti ti-speakerphone"></i>活动推广</span>
-        <span class="tag" data-val="心理科普文章"><i class="ti ti-bulb"></i>心理科普</span>
-        <span class="tag" data-val="情感共鸣类内容"><i class="ti ti-heart"></i>情感共鸣</span>
-        <span class="tag" data-val="服务/产品介绍"><i class="ti ti-info-circle"></i>服务介绍</span>
-        <span class="tag" data-val="用户招募/报名引导"><i class="ti ti-user-plus"></i>用户招募</span>
-        <span class="tag" data-val="活动复盘/用户反馈展示"><i class="ti ti-camera"></i>活动复盘</span>
-      </div>
+    <!-- 底部操作按钮 -->
+    <div class="controls">
+        <div class="mode-buttons">
+            <button class="btn btn-truth" id="btn-truth" onclick="drawCard('truth')">抽 真心话</button>
+            <button class="btn btn-dare" id="btn-dare" onclick="drawCard('dare')">抽 大冒险</button>
+        </div>
     </div>
 
-    <!-- 受众 -->
-    <div class="card">
-      <p class="section-label">目标受众</p>
-      <div class="tag-group" id="audience-tags">
-        <span class="tag active" data-val="城市青年（25-35岁，有情绪探索意愿）"><i class="ti ti-mood-smile"></i>都市青年</span>
-        <span class="tag" data-val="有压力管理需求的职场人士"><i class="ti ti-briefcase"></i>职场人</span>
-        <span class="tag" data-val="有社交需求的单身男女"><i class="ti ti-users"></i>单身群体</span>
-        <span class="tag" data-val="对心理学感兴趣的爱好者/学习者"><i class="ti ti-book"></i>心理爱好者</span>
-        <span class="tag" data-val="正在经历情感困惑或人际压力的普通人"><i class="ti ti-leaf"></i>寻求支持者</span>
-      </div>
+    <!-- 题库管理面板（默认隐藏） -->
+    <div class="modal" id="editor-modal">
+        <div class="modal-header">
+            <div class="modal-title">自定义题库配置</div>
+            <button class="reset-btn" style="background: #ff416c" onclick="restoreDefaultDatabase()">恢复初始默认题库</button>
+        </div>
+        <div class="tabs">
+            <div class="tab active" id="tab-truth" onclick="switchTab('truth')">真心话配置</div>
+            <div class="tab" id="tab-dare" onclick="switchTab('dare')">大冒险配置</div>
+        </div>
+        <div class="editor-container" id="editor-list">
+            <!-- 动态生成列表 -->
+        </div>
+        <button class="add-btn" onclick="addNewItem()">+ 添加新题目</button>
+        <div class="modal-footer" style="margin-top: 12px;">
+            <button class="footer-btn cancel-btn" onclick="closeEditor()">取消</button>
+            <button class="footer-btn save-btn" onclick="saveDatabase()">保存并应用</button>
+        </div>
     </div>
 
-    <hr class="divider" />
+    <script>
+        // 内置初始默认题库
+        const defaultDatabase = {
+            truth: [
+                { zone: "初级安全区", text: "你最容易对什么样的人有好感？" },
+                { zone: "初级安全区", text: "你第一眼最看重异性的什么？" },
+                { zone: "初级安全区", text: "你谈恋爱会主动还是被动？" },
+                { zone: "初级安全区", text: "你会偷偷观察喜欢的人吗？" },
+                { zone: "初级安全区", text: "你最理想的约会是什么？" },
+                { zone: "初级安全区", text: "你会日久生情还是一见钟情？" },
+                { zone: "初级安全区", text: "你最加分的性格是什么？" },
+                { zone: "初级安全区", text: "你会因为颜值心动吗？" },
+                { zone: "初级安全区", text: "你恋爱里最讨厌什么？" },
+                { zone: "初级安全区", text: "你觉得自己好追吗？" },
+                { zone: "关系升温区", text: "你会偷偷吃醋吗？" },
+                { zone: "关系升温区", text: "你会反复看聊天记录吗？" },
+                { zone: "关系升温区", text: "你会故意等别人找你吗？" },
+                { zone: "关系升温区", text: "你最难忘的一次心动是什么？" },
+                { zone: "关系升温区", text: "你会口是心非吗？" },
+                { zone: "关系升温区", text: "你会因为细节突然喜欢一个人吗？" },
+                { zone: "关系升温区", text: "你最希望另一半怎么安慰你？" },
+                { zone: "关系升温区", text: "你吵架后会主动低头吗？" },
+                { zone: "关系升温区", text: "你最怕感情里什么？" },
+                { zone: "关系升温区", text: "你会偷偷测试别人爱不爱你吗？" },
+                { zone: "暧昧区", text: "你会主动制造偶遇吗？" },
+                { zone: "暧昧区", text: "你有没有暗恋过很久的人？" },
+                { zone: "暧昧区", text: "你觉得暧昧最上头的瞬间是什么？" },
+                { zone: "暧昧区", text: "你喜欢被直球还是慢热？" },
+                { zone: "暧昧区", text: "你觉得自己恋爱脑吗？" },
+                { zone: "暧昧区", text: "你会想很多然后不敢靠近吗？" },
+                { zone: "暧昧区", text: "你收到过最心动的话是什么？" },
+                { zone: "暧昧区", text: "你会因为一个眼神心动吗？" },
+                { zone: "暧昧区", text: "你喜欢粘人型还是独立型？" },
+                { zone: "暧昧区", text: "你最容易在哪种情况下沦陷？" },
+                { zone: "深层情绪区", text: "你觉得自己值得被爱吗？" },
+                { zone: "深层情绪区", text: "你有被人坚定选择过吗？" },
+                { zone: "深层情绪区", text: "你在感情里最缺什么？" },
+                { zone: "深层情绪区", text: "你会害怕进入亲密关系吗？" },
+                { zone: "深层情绪区", text: "你有没有因为喜欢一个人变得自卑？" },
+                { zone: "深层情绪区", text: "你最想被别人理解什么？" },
+                { zone: "深层情绪区", text: "你觉得自己真实的一面容易被看见吗？" },
+                { zone: "深层情绪区", text: "你会因为害怕失去而不敢开始吗？" },
+                { zone: "深层情绪区", text: "你现在更想恋爱还是更怕恋爱？" },
+                { zone: "深层情绪区", text: "你最孤独的时候是什么感觉？" },
+                { zone: "微心动区", text: "现场有没有你想进一步认识的人？" },
+                { zone: "微心动区", text: "你觉得谁最像理想型？" },
+                { zone: "微心动区", text: "你会对什么样的眼神心动？" },
+                { zone: "微心动区", text: "你更容易被温柔吸引还是被有趣吸引？" },
+                { zone: "微心动区", text: "你觉得恋爱里最戳你的细节是什么？" },
+                { zone: "微心动区", text: "你会偷偷记住别人说的话吗？" },
+                { zone: "微心动区", text: "你觉得自己适合长期关系吗？" },
+                { zone: "微心动区", text: "你会想象未来另一半的样子吗？" },
+                { zone: "微心动区", text: "你希望别人怎么喜欢你？" },
+                { zone: "微心动区", text: "如果今晚只能加一个人微信，你会选什么样的人？" }
+            ],
+            dare: [
+                { zone: "轻互动区", text: "和左边的人击掌并夸他一句" },
+                { zone: "轻互动区", text: "对右边的人说一句真诚的话" },
+                { zone: "轻互动区", text: "选择一个人对视10秒" },
+                { zone: "轻互动区", text: "和一个人合拍一张氛围感照片" },
+                { zone: "轻互动区", text: "学一个你觉得最可爱的表情" },
+                { zone: "轻互动区", text: "用三个词形容自己" },
+                { zone: "轻互动区", text: "找一个人和你背靠背坐30秒" },
+                { zone: "轻互动区", text: "给现场一个人起外号" },
+                { zone: "轻互动区", text: "模仿一下你恋爱时的状态" },
+                { zone: "轻互动区", text: "用一句话介绍自己的恋爱观" },
+                { zone: "升温互动区", text: "找一个人互相说第一印象" },
+                { zone: "升温互动区", text: "给一个人唱一句情歌" },
+                { zone: "升温互动区", text: "和一个人十指碰十秒" },
+                { zone: "升温互动区", text: "让一个人帮你整理头发" },
+                { zone: "升温互动区", text: "和一个人完成同步动作挑战" },
+                { zone: "升温互动区", text: "对一个人说一句会让人心动的话" },
+                { zone: "升温互动区", text: "给一个人拍一张你觉得最好看的照片" },
+                { zone: "升温互动区", text: "和一个人一起摆情侣pose" },
+                { zone: "升温互动区", text: "对一个人说：“我觉得你挺特别的”" },
+                { zone: "升温互动区", text: "和一个人一起录五秒视频" },
+                { zone: "暧昧区", text: "和一个人靠肩十秒" },
+                { zone: "暧昧区", text: "让一个人用三个词形容你" },
+                { zone: "暧昧区", text: "对一个人轻声说一句悄悄话" },
+                { zone: "暧昧区", text: "和一个人完成“假装初次约会”30秒" },
+                { zone: "暧昧区", text: "牵一个人的手绕营地走一圈" },
+                { zone: "暧昧区", text: "和一个人互相喂零食" },
+                { zone: "暧昧区", text: "和一个人共同完成自拍九连拍" },
+                { zone: "暧昧区", text: "模拟给喜欢的人发语音" },
+                { zone: "暧昧区", text: "和一个人进行“深情对视挑战”" },
+                { zone: "暧昧区", text: "让一个人选你身上最有魅力的地方" },
+                { zone: "情绪连接区", text: "对一个人认真说一句感谢" },
+                { zone: "情绪连接区", text: "分享一个别人不知道的小秘密" },
+                { zone: "情绪连接区", text: "讲一次让你印象很深的心动经历" },
+                { zone: "情绪连接区", text: "对一个人说一句鼓励的话" },
+                { zone: "情绪连接区", text: "给一个人一个专属称呼" },
+                { zone: "情绪连接区", text: "说出你最希望未来关系里的状态" },
+                { zone: "情绪连接区", text: "认真夸一个人的性格" },
+                { zone: "情绪连接区", text: "分享一次你觉得被治愈的瞬间" },
+                { zone: "情绪连接区", text: "和一个人完成“理想约会情景演绎”" },
+                { zone: "情绪连接区", text: "说一句你平时不太敢说的话" },
+                { zone: "微暧昧心动区", text: "从现场选一个你想深入认识的人聊一分钟" },
+                { zone: "微暧昧心动区", text: "和一个人互换一个小物件" },
+                { zone: "微暧昧心动区", text: "对一个人说：“如果早点认识你就好了”" },
+                { zone: "微暧昧心动区", text: "给一个人设计一个备注名" },
+                { zone: "微暧昧心动区", text: "和一个人拍“电影感对视照”" },
+                { zone: "微暧昧心动区", text: "用一句话撩现场一个人" },
+                { zone: "微暧昧心动区", text: "让一个人评价你适不适合恋爱" },
+                { zone: "微暧昧心动区", text: "闭眼让别人选择一个人和你碰拳" },
+                { zone: "微暧昧心动区", text: "给一个人发一句暧昧开场白（模拟）" },
+                { zone: "微暧昧心动区", text: "和一个人约定活动结束后单独聊十分钟" }
+            ]
+        };
 
-    <!-- 语气 + 避坑 -->
-    <div class="row">
-      <div class="card" style="margin-bottom:0">
-        <p class="section-label">文案语气</p>
-        <select id="tone-select">
-          <option value="温暖日常、像朋友说话，不端着">温暖日常（朋友感）</option>
-          <option value="轻松活泼、带一点俏皮和自嘲">轻松活泼（俏皮感）</option>
-          <option value="沉稳专业，但有温度，不冷漠">沉稳专业（有温度）</option>
-          <option value="治愈系，有留白，不把道理说满">治愈留白（意境感）</option>
-        </select>
-      </div>
-      <div class="card" style="margin-bottom:0">
-        <p class="section-label">要避开的AI腔类型</p>
-        <select id="avoid-select">
-          <option value="不要用「深刻」「卓越」「赋能」「全方位」「携手共创」等词；不要用排比句堆砌意义；不要每段结尾都升华总结">过度升华型</option>
-          <option value="不要句句带感叹号；不要「太棒了」「震撼」「绝了」式夸张；不要让人感觉在被推销">情绪夸张型</option>
-          <option value="不要用条目列举代替真实叙述；不要每段都是「首先…其次…最后」；不要写成说明书或教材">结构僵硬型</option>
-          <option value="不要用「在快节奏的当下」「在这个浮躁的时代」「越来越多的人」开头；不要假装说出了所有人的心声">伪共鸣开头型</option>
-        </select>
-      </div>
-    </div>
+        // 全局核心数据状态
+        let customDatabase = {}; // 总题库
+        let truthPool = [];      // 动态真心话抽卡池
+        let darePool = [];       // 动态大冒险抽卡池
+        let isAnimating = false;
+        let currentEditTab = 'truth'; // 正在编辑的分组
+        let tempEditList = [];   // 编辑时的临时缓存
 
-    <div style="margin-top: 12px;">
-      <div class="card">
-        <p class="section-label">本次内容的核心信息</p>
-        <textarea id="core-info" placeholder="尽量具体，比如：6月22日在广州番禺举办心理剧本杀，主题「职场边界」，4小时，6-10人小团体，适合想探索自我、有职场困惑的人，报名费198元，扫码进群…"></textarea>
-        <p class="tip">时间、地点、人数、主题、特色、价格、报名方式——填得越具体，生成的提示词越好用</p>
-      </div>
-    </div>
+        // 【核心】从 localStorage 加载记忆
+        function initGameData() {
+            // 1. 获取永久题库（若没有则使用默认初始题库）
+            const savedDB = localStorage.getItem('tod_custom_db');
+            if (savedDB) {
+                customDatabase = JSON.parse(savedDB);
+            } else {
+                customDatabase = JSON.parse(JSON.stringify(defaultDatabase));
+                localStorage.setItem('tod_custom_db', JSON.stringify(customDatabase));
+            }
 
-    <button class="gen-btn" onclick="generate()">
-      生成去AI味提示词 ↗
-    </button>
+            // 2. 获取当前的动态抽卡池状态（实现“不放回抽取”的退出记忆）
+            const savedTruthPool = localStorage.getItem('tod_pool_truth');
+            const savedDarePool = localStorage.getItem('tod_pool_dare');
 
-    <div class="result-box" id="result-box">
-      <div class="result-header">
-        <span class="result-title">生成的提示词（复制后直接给AI用）</span>
-        <button class="copy-btn" onclick="copyResult()">
-          <i class="ti ti-copy"></i><span id="copy-label">复制</span>
-        </button>
-      </div>
-      <div class="result-text" id="result-text"></div>
-    </div>
+            if (savedTruthPool !== null && savedDarePool !== null) {
+                truthPool = JSON.parse(savedTruthPool);
+                darePool = JSON.parse(savedDarePool);
+            } else {
+                // 如果是第一次游玩或者被重置了，则复制完整题库
+                truthPool = [...customDatabase.truth];
+                darePool = [...customDatabase.dare];
+                saveCurrentPools();
+            }
+            updateUI();
+        }
 
-    <div class="footer">
-      k心理 · 内容运营工具<br>生成的提示词可直接粘贴到 ChatGPT、Claude、Kimi 等任意AI使用
-    </div>
+        // 保存当前不放回抽卡池状态
+        function saveCurrentPools() {
+            localStorage.setItem('tod_pool_truth', JSON.stringify(truthPool));
+            localStorage.setItem('tod_pool_dare', JSON.stringify(darePool));
+        }
 
-  </div>
+        // 洗牌功能（恢复当前动态池为完整题库）
+        function resetPools() {
+            truthPool = [...customDatabase.truth];
+            darePool = [...customDatabase.dare];
+            saveCurrentPools();
+            updateUI();
+            
+            const card = document.getElementById('card');
+            card.classList.remove('flipped');
+            document.getElementById('front-hint').innerText = "已重新洗牌，开启新一轮！";
+        }
 
-  <script>
-    function initTags(groupId) {
-      const tags = document.querySelectorAll('#' + groupId + ' .tag');
-      tags.forEach(function(t) {
-        t.addEventListener('click', function() {
-          tags.forEach(function(x) { x.classList.remove('active'); });
-          t.classList.add('active');
-        });
-      });
-    }
-    initTags('platform-tags');
-    initTags('type-tags');
-    initTags('audience-tags');
+        // 更新界面文字
+        function updateUI() {
+            document.getElementById('pool-count').innerText = `真心话: ${truthPool.length}/${customDatabase.truth.length} | 大冒险: ${darePool.length}/${customDatabase.dare.length}`;
+            document.getElementById('btn-truth').classList.toggle('disabled', truthPool.length === 0);
+            document.getElementById('btn-dare').classList.toggle('disabled', darePool.length === 0);
+        }
 
-    function getActive(groupId) {
-      var el = document.querySelector('#' + groupId + ' .tag.active');
-      return el ? el.dataset.val : '';
-    }
+        // 抽卡核心逻辑
+        function drawCard(type) {
+            if (isAnimating) return;
+            
+            let currentPool = type === 'truth' ? truthPool : darePool;
+            if (currentPool.length === 0) return;
 
-    function generate() {
-      var platform = getActive('platform-tags');
-      var type = getActive('type-tags');
-      var audience = getActive('audience-tags');
-      var tone = document.getElementById('tone-select').value;
-      var avoid = document.getElementById('avoid-select').value;
-      var core = document.getElementById('core-info').value.trim();
+            isAnimating = true;
+            const card = document.getElementById('card');
 
-      var coreSection = core ? '\n\n【内容核心信息】\n' + core : '\n\n【内容核心信息】\n（请根据你掌握的活动/内容信息展开）';
+            if (card.classList.contains('flipped')) {
+                card.classList.remove('flipped');
+                setTimeout(() => executeDraw(type, currentPool), 300);
+            } else {
+                executeDraw(type, currentPool);
+            }
+        }
 
-      var prompt = '你是一名在' + platform + '做内容运营的心理行业从业者，主要写' + type + '，服务对象是' + audience + '。' + coreSection + '\n\n【写作任务】\n根据以上背景，写一篇发布在' + platform + '上的' + type + '。\n\n【语气要求】\n' + tone + '。读起来要像是某个真实的人在说话，而不是在"输出内容"。\n\n【禁止出现的AI腔】\n' + avoid + '。\n\n【逐条检查清单（写完自检）】\n- 开头不能是情感铺垫或"在这个…的时代"，直接进入具体场景或有趣的细节\n- 不能有全是道理、没有画面的段落\n- 结尾不能是"期待你的到来"或空洞号召，要有具体、真实的行动引导\n- 文中至少有一处让人感觉"是的，就是这个感觉"的细节描写\n- 整体读起来像是同龄人写的，不像品牌稿或心理教材\n- 如果有数字信息（时间/地点/价格），要自然嵌入，不要单独列在最后像表格\n\n【输出格式】\n直接给出正文，不需要加任何标题、说明或注释。';
+        function executeDraw(type, currentPool) {
+            const card = document.getElementById('card');
+            const cardBack = document.getElementById('card-back');
+            
+            const randomIndex = Math.floor(Math.random() * currentPool.length);
+            const item = currentPool.splice(randomIndex, 1)[0]; // 不放回抽取
 
-      document.getElementById('result-text').textContent = prompt;
-      var box = document.getElementById('result-box');
-      box.style.display = 'block';
-      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+            // 实时同步状态至本地，确保中途退出记忆不丢失
+            saveCurrentPools();
 
-    function copyResult() {
-      var text = document.getElementById('result-text').textContent;
-      var label = document.getElementById('copy-label');
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() {
-          label.textContent = '已复制 ✓';
-          setTimeout(function() { label.textContent = '复制'; }, 1800);
-        });
-      } else {
-        var ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        label.textContent = '已复制 ✓';
-        setTimeout(function() { label.textContent = '复制'; }, 1800);
-      }
-    }
-  </script>
+            if (type === 'truth') {
+                cardBack.classList.remove('dare-mode');
+            } else {
+                cardBack.classList.add('dare-mode');
+            }
+            
+            document.getElementById('zone-tag').innerText = item.zone || "自定义区";
+            document.getElementById('question-text').innerText = item.text;
+
+            setTimeout(() => {
+                card.classList.add('flipped');
+                updateUI();
+                isAnimating = false;
+            }, 100);
+        }
+
+        /* ================= 题库后台配置功能 ================= */
+
+        function openEditor() {
+            document.getElementById('editor-modal').style.display = 'flex';
+            currentEditTab = 'truth';
+            switchTab('truth');
+        }
+
+        function closeEditor() {
+            document.getElementById('editor-modal').style.display = 'none';
+        }
+
+        // 切换编辑分类（真心话/大冒险）
+        function switchTab(type) {
+            currentEditTab = type;
+            document.getElementById('tab-truth').classList.toggle('active', type === 'truth');
+            document.getElementById('tab-dare').classList.toggle('active', type === 'dare');
+            
+            // 浅拷贝数据至临时编辑区
+            tempEditList = JSON.parse(JSON.stringify(customDatabase[type]));
+            renderEditorList();
+        }
+
+        // 渲染编辑列表
+        function renderEditorList() {
+            const container = document.getElementById('editor-list');
+            container.innerHTML = '';
+            
+            tempEditList.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'edit-item';
+                div.innerHTML = `
+                    <input type="text" class="edit-zone" placeholder="分组/区域" value="${item.zone}" onchange="updateTempItem(${index}, 'zone', this.value)">
+                    <input type="text" class="edit-text" placeholder="题目内容" value="${item.text}" onchange="updateTempItem(${index}, 'text', this.value)">
+                    <button class="del-btn" onclick="deleteTempItem(${index})">删</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateTempItem(index, key, value) {
+            tempEditList[index][key] = value;
+        }
+
+        function deleteTempItem(index) {
+            tempEditList.splice(index, 1);
+            renderEditorList();
+        }
+
+        function addNewItem() {
+            tempEditList.push({ zone: "自定义区", text: "新题目" });
+            renderEditorList();
+            // 自动滚动到底部
+            const container = document.getElementById('editor-list');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 保存并应用全新题库
+        function saveDatabase() {
+            customDatabase[currentEditTab] = tempEditList.filter(item => item.text.trim() !== "");
+            localStorage.setItem('tod_custom_db', JSON.stringify(customDatabase));
+            
+            // 题库结构改变后，自动重置抽卡池以应用全新题目
+            alert("保存成功！题库已更新并自动洗牌。");
+            closeEditor();
+            resetPools();
+        }
+
+        // 恢复初始默认题库
+        function restoreDefaultDatabase() {
+            if(confirm("确定要放弃所有修改，恢复到最开始的100道经典题库吗？")) {
+                customDatabase = JSON.parse(JSON.stringify(defaultDatabase));
+                localStorage.setItem('tod_custom_db', JSON.stringify(customDatabase));
+                closeEditor();
+                resetPools();
+            }
+        }
+
+        // 页面首次载入运行
+        initGameData();
+    </script>
 </body>
 </html>
